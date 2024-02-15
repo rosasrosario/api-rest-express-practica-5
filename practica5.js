@@ -11,6 +11,13 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
+    //capturamos la ruta actual
+    //inicializamos el valor de la key que apunta a ruta actual con el valor actual o con cero
+    //incrementamos el valor de la key que apunta a la ruta actual
+    //si el contador llega a incrementarse a 3
+        //escribimos el mensaje
+        //en una respuesta de texto enviamos un script javascript concatena
+    //si aun no es tres... continuamos la ejecucion de las rutas
     next()
 }
 
