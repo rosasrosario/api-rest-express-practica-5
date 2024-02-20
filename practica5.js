@@ -1,7 +1,9 @@
 const express = require('express');
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const port = 3700;
 const app = express();
+app.use(cookieParser());
 
 app.use(session({
     user: 'admin',
@@ -11,43 +13,81 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
-    //capturamos la ruta actual
-    //inicializamos el valor de la key que apunta a ruta actual con el valor actual o con cero
-    //incrementamos el valor de la key que apunta a la ruta actual
-    //si el contador llega a incrementarse a 3
-        //escribimos el mensaje
-        //en una respuesta de texto enviamos un script javascript concatena
-    //si aun no es tres... continuamos la ejecucion de las rutas
-    next()
-}
-
-);
+    if (!req.session.visitas) {
+        req.session.visitas = {};
+    }
+    const rutaActual = req.path;
+    req.session.visitas[rutaActual] = req.session.visitas[rutaActual] || 0;
+    req.session.visitas[rutaActual]++;
+    if (req.session.visitas[rutaActual] === 3) {
+        const msg = `Parece que te interesa el tema de la ruta ${rutaActual}`;
+        res.status(200).send(`<script>alert('${msg}')</script>`);
+    } else {
+        next();
+    }
+});
 
 app.get('/', (req, res) => {
-    res.send('Visita las paginas que tu quieras');
+    const agent = req.headers['user-agent'];
+    // Capturamos el agente del usuario y lo guardamos en una cookie llamada "Navegador"
+    res.cookie("Navegador", agent, {
+        httpOnly: true
+    });
+    res.send('Visita las páginas que desees');
 });
-app.get('/query', (req, res) => {
-    res.send('querys');
-});
+
+// Rutas adicionales
 app.get('/ruta1', (req, res) => {
-    res.send('Pagina de ruta1');
+    res.send('Receta de pastel de chocolate.');
 });
 
 app.get('/ruta2', (req, res) => {
-    res.send('Pagina de ruta2');
+    res.send('Receta de cheesecake de fresa.');
 });
+
 app.get('/ruta3', (req, res) => {
-    res.send('Pagina de ruta3');
+    res.send('Receta de flan.');
 });
 
 app.get('/ruta4', (req, res) => {
-    res.send('Pagina de ruta4');
+    res.send('Receta de pastel de tres leches.');
 });
+
+app.get('/ruta5', (req, res) => {
+    res.send('Receta de pastel de red velvet.');
+});
+
+// Ruta con query
+app.get('/query', (req, res) => {
+    const query_user = req.query;
+    // Guardamos cada dato de la query en una cookie diferente
+    if (query_user.data1) {
+        res.cookie("Data1", query_user.data1, {
+            httpOnly: true,
+            maxAge: 1000 * 20
+        });
+    }
+    if (query_user.data2) {
+        res.cookie("Data2", query_user.data2, {
+            httpOnly: true,
+            maxAge: 1000 * 20
+        });
+    }
+    if (query_user.data3) {
+        res.cookie("Data3", query_user.data3, {
+            httpOnly: true,
+            maxAge: 1000 * 20
+        });
+    }
+    res.send('Querys recibidas');
+});
+
+// Ruta para mostrar historial de visitas
 app.get('/historial', (req, res) => {
-    let paginas = null
-    res.send(`Páginas consultadas: ${paginas}`);
+    const paginas = req.session.visitas;
+    res.send(`Páginas consultadas: ${JSON.stringify(paginas)}`);
 });
 
 app.listen(port, () => {
-    console.log(`Escuchando puerto `,port);
+    console.log(`Escuchando puerto ${port}`);
 });
